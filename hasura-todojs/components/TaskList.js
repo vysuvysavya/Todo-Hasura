@@ -1,9 +1,8 @@
-"use client";
-
 import { useQuery, gql, useMutation } from "@apollo/client";
 import { CheckCircleIcon, XCircleIcon, Trash2Icon, EditIcon } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { useState } from "react";
+import AddTaskForm from "./AddTaskForm"; // Import the AddTaskForm component
 
 const GET_TODOS = gql`
   query GetTodos($limit: Int!, $offset: Int!) {
@@ -49,7 +48,7 @@ export default function TaskList() {
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
-  const { data, loading, error } = useQuery(GET_TODOS, {
+  const { data, loading, error, refetch } = useQuery(GET_TODOS, {
     variables: {
       limit: pageSize,
       offset: (page - 1) * pageSize,
@@ -142,6 +141,8 @@ export default function TaskList() {
     <div className="container mx-auto mt-8 px-6">
       <Toaster />
       <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Task List</h1>
+
+      <AddTaskForm refetchTasks={refetch} /> {/* Pass refetch function to AddTaskForm */}
 
       <table className="min-w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
         <thead>
@@ -239,22 +240,22 @@ export default function TaskList() {
                   type="checkbox"
                   checked={newStatus}
                   onChange={() => setNewStatus(!newStatus)}
-                  className="form-checkbox"
+                  className="h-4 w-4"
                 />
               </div>
             </div>
             <div className="flex justify-end">
               <button
-                onClick={handleUpdateTask}
-                className="bg-indigo-500 text-white px-4 py-2 rounded-md mr-2"
-              >
-                Update
-              </button>
-              <button
                 onClick={() => setIsModalOpen(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded-md"
+                className="px-6 py-2 bg-gray-200 rounded-md mr-4"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleUpdateTask}
+                className="px-6 py-2 bg-blue-600 text-white rounded-md"
+              >
+                Update Task
               </button>
             </div>
           </div>

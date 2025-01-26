@@ -1,5 +1,6 @@
 import { useMutation, gql } from "@apollo/client";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 // Corrected mutation query with non-nullable title
 const ADD_TASK = gql`
@@ -16,12 +17,17 @@ const ADD_TASK = gql`
   }
 `;
 
-export default function AddTaskForm() {
+export default function AddTaskForm({ refetchTasks }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
 
-  const [addTask] = useMutation(ADD_TASK);
+  const [addTask] = useMutation(ADD_TASK, {
+    onCompleted: () => {
+      toast.success("Task added successfully!");
+      refetchTasks(); // Refetch tasks to get the latest task list
+    },
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +38,7 @@ export default function AddTaskForm() {
     }
 
     try {
-      const { data } = await addTask({
+      await addTask({
         variables: {
           title,
           description: description || "",
@@ -40,13 +46,12 @@ export default function AddTaskForm() {
         },
       });
 
-      console.log("Task Added:", data);
-
       setTitle("");
       setDescription("");
       setIsCompleted(false);
     } catch (error) {
       console.error("Error adding task:", error);
+      toast.error("Error adding task!");
     }
   };
 
