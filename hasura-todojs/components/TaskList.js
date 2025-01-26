@@ -6,7 +6,7 @@ import AddTaskForm from "./AddTaskForm"; // Import the AddTaskForm component
 
 const GET_TODOS = gql`
   query GetTodos($limit: Int!, $offset: Int!) {
-    todos(limit: $limit, offset: $offset) {
+    todos(limit: $limit, offset: $offset , order_by: {id: desc}) {
       id
       title
       description
@@ -140,9 +140,9 @@ export default function TaskList() {
   return (
     <div className="container mx-auto mt-8 px-6">
       <Toaster />
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Task List</h1>
 
       <AddTaskForm refetchTasks={refetch} /> {/* Pass refetch function to AddTaskForm */}
+      <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Task List</h1>
 
       <table className="min-w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
         <thead>
