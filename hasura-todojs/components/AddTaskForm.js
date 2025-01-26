@@ -26,29 +26,22 @@ export default function AddTaskForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Check if title is provided
     if (!title.trim()) {
       alert("Title is required!");
       return;
     }
 
-    // Check and log the data being sent to the mutation
-    console.log("Sending data to mutation:", { title, description, isCompleted });
-
     try {
-      // Execute mutation with required fields
       const { data } = await addTask({
         variables: {
           title,
-          description: description || "",  // Ensure description is an empty string if not provided
+          description: description || "",
           is_completed: isCompleted,
         },
       });
 
-      // Log the response
       console.log("Task Added:", data);
-      
-      // Reset form after successful submission
+
       setTitle("");
       setDescription("");
       setIsCompleted(false);
@@ -58,38 +51,47 @@ export default function AddTaskForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="max-w-xl mx-auto bg-white p-6 space-y-6">
+      <h2 className="text-2xl font-semibold text-center text-gray-800">Add New Task</h2>
       <div>
-        <label htmlFor="title" className="block text-sm font-medium">Task Title</label>
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700">Task Title</label>
         <input
           id="title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          className="mt-2 block w-full rounded-lg border-2 border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2 text-sm"
           required
         />
       </div>
       <div>
-        <label htmlFor="description" className="block text-sm font-medium">Description</label>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
         <textarea
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          className="mt-2 block w-full rounded-lg border-2 border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2 text-sm"
+          placeholder="Optional"
         />
       </div>
-      <div>
-        <label htmlFor="is_completed" className="block text-sm font-medium">Completed</label>
+      <div className="flex items-center">
         <input
           id="is_completed"
           type="checkbox"
           checked={isCompleted}
           onChange={(e) => setIsCompleted(e.target.checked)}
-          className="mt-1"
+          className="mr-2 h-4 w-4 text-indigo-500 border-gray-300 rounded"
         />
+        <label htmlFor="is_completed" className="text-sm text-gray-700">Completed?</label>
       </div>
-      <button type="submit" className="mt-4 py-2 px-4 bg-blue-500 text-white rounded-md">Add Task</button>
+      <div className="flex justify-center">
+        <button
+          type="submit"
+          className="w-full mt-4 py-2 px-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-200"
+        >
+          Add Task
+        </button>
+      </div>
     </form>
   );
 }
