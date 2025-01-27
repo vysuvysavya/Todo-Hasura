@@ -64,23 +64,44 @@ export default function TaskList() {
   const [newDescription, setNewDescription] = useState("");
   const [newStatus, setNewStatus] = useState(false);
 
-  if (loading) return <p>Loading...</p>;
+if (loading) {
+  return (
+    <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 border-solid"></div>
+    </div>
+  );
+}
   if (error) return <p>Error: {error.message}</p>;
-
   const handleDeleteTask = async (id) => {
     try {
       const { data: mutationData } = await deleteTask({
         variables: { id },
         update: (cache) => {
-          const existingTodos = cache.readQuery({ query: GET_TODOS });
+          const existingTodos = cache.readQuery({
+            query: GET_TODOS,
+            variables: {
+              limit: pageSize,
+              offset: (page - 1) * pageSize,
+            },
+          });
+  
+          if (!existingTodos || !existingTodos.todos) return; // Safeguard for missing cache
+  
           const updatedTodos = existingTodos.todos.filter(todo => todo.id !== id);
           cache.writeQuery({
             query: GET_TODOS,
-            data: { todos: updatedTodos },
+            data: {
+              ...existingTodos,
+              todos: updatedTodos,
+            },
+            variables: {
+              limit: pageSize,
+              offset: (page - 1) * pageSize,
+            },
           });
         },
       });
-
+  
       if (mutationData.delete_todos.affected_rows > 0) {
         toast.success("Task deleted successfully!");
       } else {
@@ -91,13 +112,14 @@ export default function TaskList() {
       console.error(error);
     }
   };
-
+  
+  
   const handleUpdateTask = async () => {
     if (!newTitle) {
       toast.error("Task title is required!");
       return;
     }
-
+  
     try {
       const { data: mutationData } = await updateTask({
         variables: {
@@ -108,23 +130,37 @@ export default function TaskList() {
         },
         update: (cache, { data: { update_todos } }) => {
           const existingTodos = cache.readQuery({ query: GET_TODOS });
+          if (!existingTodos || !existingTodos.todos) return; // Safeguard for missing cache
           const updatedTodos = existingTodos.todos.map(todo =>
             todo.id === currentTask.id ? { ...todo, ...update_todos.returning[0] } : todo
           );
           cache.writeQuery({
             query: GET_TODOS,
-            data: { todos: updatedTodos },
+            data: { ...existingTodos, todos: updatedTodos },
           });
         },
       });
-
-      toast.success(`Task "${mutationData.update_todos.returning[0].title}" updated successfully!`);
-      setIsModalOpen(false); // Close the modal after updating
+  
+      // Safeguard for undefined or empty response
+      if (
+        mutationData &&
+        mutationData.update_todos &&
+        mutationData.update_todos.returning &&
+        mutationData.update_todos.returning.length > 0
+      ) {
+        const updatedTask = mutationData.update_todos.returning[0];
+        toast.success(`Task "${updatedTask.title}" updated successfully!`);
+      } else {
+        toast.error("Failed to update task: No data returned!");
+      }
+  
+      setIsModalOpen(false); // Close the modal after a successful update
     } catch (error) {
       toast.error("Failed to update task!");
       console.error(error);
     }
   };
+  
 
   const openUpdateModal = (task) => {
     setCurrentTask(task);
@@ -188,7 +224,7 @@ export default function TaskList() {
       </table>
 
       {/* Pagination */}
-      <div className="mt-6 flex justify-center">
+      <div className="mt-6 mb-6 flex justify-center">
         <button
           onClick={() => setPage(Math.max(page - 1, 1))}
           disabled={page === 1}
