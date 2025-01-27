@@ -2,7 +2,7 @@ import { useQuery, gql, useMutation } from "@apollo/client";
 import { CheckCircleIcon, XCircleIcon, Trash2Icon, EditIcon } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { useState } from "react";
-import AddTaskForm from "./AddTaskForm"; // Import the AddTaskForm component
+import AddTaskForm from "./AddTaskForm"; 
 
 const GET_TODOS = gql`
   query GetTodos($limit: Int!, $offset: Int!) {
@@ -85,7 +85,7 @@ if (loading) {
             },
           });
   
-          if (!existingTodos || !existingTodos.todos) return; // Safeguard for missing cache
+          if (!existingTodos || !existingTodos.todos) return; 
   
           const updatedTodos = existingTodos.todos.filter(todo => todo.id !== id);
           cache.writeQuery({
@@ -130,7 +130,7 @@ if (loading) {
         },
         update: (cache, { data: { update_todos } }) => {
           const existingTodos = cache.readQuery({ query: GET_TODOS });
-          if (!existingTodos || !existingTodos.todos) return; // Safeguard for missing cache
+          if (!existingTodos || !existingTodos.todos) return; 
           const updatedTodos = existingTodos.todos.map(todo =>
             todo.id === currentTask.id ? { ...todo, ...update_todos.returning[0] } : todo
           );
@@ -141,7 +141,6 @@ if (loading) {
         },
       });
   
-      // Safeguard for undefined or empty response
       if (
         mutationData &&
         mutationData.update_todos &&
@@ -154,7 +153,7 @@ if (loading) {
         toast.error("Failed to update task: No data returned!");
       }
   
-      setIsModalOpen(false); // Close the modal after a successful update
+      setIsModalOpen(false); 
     } catch (error) {
       toast.error("Failed to update task!");
       console.error(error);

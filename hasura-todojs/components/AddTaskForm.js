@@ -2,7 +2,6 @@ import { useMutation, gql } from "@apollo/client";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-// Corrected mutation query with non-nullable title
 const ADD_TASK = gql`
   mutation InsertTodos($title: String!, $description: String, $is_completed: Boolean) {
     insert_todos(objects: { title: $title, description: $description, is_completed: $is_completed }) {
@@ -25,7 +24,7 @@ export default function AddTaskForm({ refetchTasks }) {
   const [addTask] = useMutation(ADD_TASK, {
     onCompleted: () => {
       toast.success("Task added successfully!");
-      refetchTasks(); // Refetch tasks to get the latest task list
+      refetchTasks();
     },
   });
 
