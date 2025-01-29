@@ -44,6 +44,7 @@ const UPDATE_TASK = gql`
   }
 `;
 
+
 export default function TaskList() {
   const [page, setPage] = useState(1);
   const pageSize = 5;
@@ -55,53 +56,41 @@ export default function TaskList() {
     },
   });
 
-  const [deleteTask] = useMutation(DELETE_TASK);
-  const [updateTask] = useMutation(UPDATE_TASK);
+  const [deleteTask] = useMutation(DELETE_TASK, {
+    refetchQueries: [{ query: GET_TODOS, variables: { limit: pageSize, offset: (page - 1) * pageSize } }],
+  });
+
+  const [updateTask] = useMutation(UPDATE_TASK, {
+    refetchQueries: [{ query: GET_TODOS, variables: { limit: pageSize, offset: (page - 1) * pageSize } }],
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentTask, setCurrentTask] = useState(null);
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newStatus, setNewStatus] = useState(false);
-
-if (loading) {
-  return (
-    <div className="flex justify-center items-center h-screen">
-      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 border-solid"></div>
-    </div>
-  );
-}
+  const openUpdateModal = (task) => {
+    setCurrentTask(task);
+    setNewTitle(task.title);
+    setNewDescription(task.description || "");
+    setNewStatus(task.is_completed);
+    setIsModalOpen(true);
+  };
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 border-solid"></div>
+      </div>
+    );
+  }
   if (error) return <p>Error: {error.message}</p>;
+
+  const totalPages = Math.ceil(data?.todos_aggregate?.aggregate?.count / pageSize);
+
   const handleDeleteTask = async (id) => {
     try {
-      const { data: mutationData } = await deleteTask({
-        variables: { id },
-        update: (cache) => {
-          const existingTodos = cache.readQuery({
-            query: GET_TODOS,
-            variables: {
-              limit: pageSize,
-              offset: (page - 1) * pageSize,
-            },
-          });
-  
-          if (!existingTodos || !existingTodos.todos) return; 
-  
-          const updatedTodos = existingTodos.todos.filter(todo => todo.id !== id);
-          cache.writeQuery({
-            query: GET_TODOS,
-            data: {
-              ...existingTodos,
-              todos: updatedTodos,
-            },
-            variables: {
-              limit: pageSize,
-              offset: (page - 1) * pageSize,
-            },
-          });
-        },
-      });
-  
+      const { data: mutationData } = await deleteTask({ variables: { id } });
       if (mutationData.delete_todos.affected_rows > 0) {
         toast.success("Task deleted successfully!");
       } else {
@@ -112,14 +101,12 @@ if (loading) {
       console.error(error);
     }
   };
-  
-  
+
   const handleUpdateTask = async () => {
     if (!newTitle) {
       toast.error("Task title is required!");
       return;
     }
-  
     try {
       const { data: mutationData } = await updateTask({
         variables: {
@@ -128,55 +115,26 @@ if (loading) {
           description: newDescription || "",
           is_completed: newStatus,
         },
-        update: (cache, { data: { update_todos } }) => {
-          const existingTodos = cache.readQuery({ query: GET_TODOS });
-          if (!existingTodos || !existingTodos.todos) return; 
-          const updatedTodos = existingTodos.todos.map(todo =>
-            todo.id === currentTask.id ? { ...todo, ...update_todos.returning[0] } : todo
-          );
-          cache.writeQuery({
-            query: GET_TODOS,
-            data: { ...existingTodos, todos: updatedTodos },
-          });
-        },
       });
-  
-      if (
-        mutationData &&
-        mutationData.update_todos &&
-        mutationData.update_todos.returning &&
-        mutationData.update_todos.returning.length > 0
-      ) {
+
+      if (mutationData?.update_todos?.returning?.length > 0) {
         const updatedTask = mutationData.update_todos.returning[0];
         toast.success(`Task "${updatedTask.title}" updated successfully!`);
       } else {
         toast.error("Failed to update task: No data returned!");
       }
-  
-      setIsModalOpen(false); 
+
+      setIsModalOpen(false);
     } catch (error) {
       toast.error("Failed to update task!");
       console.error(error);
     }
   };
-  
-
-  const openUpdateModal = (task) => {
-    setCurrentTask(task);
-    setNewTitle(task.title);
-    setNewDescription(task.description);
-    setNewStatus(task.is_completed);
-    setIsModalOpen(true);
-  };
-
-  const totalTasks = data?.todos_aggregate?.aggregate?.count || 0;
-  const totalPages = Math.ceil(totalTasks / pageSize);
 
   return (
     <div className="container mx-auto mt-8 px-6">
       <Toaster />
-
-      <AddTaskForm refetchTasks={refetch} /> {/* Pass refetch function to AddTaskForm */}
+      <AddTaskForm refetchTasks={refetch} />
       <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Task List</h1>
 
       <table className="min-w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
